@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://skillswap-backend-1-h8ey.onrender.com',
+  baseURL: import.meta.env.VITE_BACKEND_URL,
 });
 
 // Add auth token to requests if available
@@ -20,14 +20,22 @@ api.interceptors.request.use((config) => {
 // Add response interceptor for debugging
 api.interceptors.response.use(
   (response) => {
+    console.log('API Success:', {
+      url: response.config.url,
+      method: response.config.method,
+      status: response.status,
+      data: response.data
+    });
     return response;
   },
   (error) => {
-    console.error('API Error:', error);
-    if (error.response) {
-      console.error('Error Status:', error.response.status);
-      console.error('Error Data:', error.response.data);
-    }
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
     return Promise.reject(error);
   }
 );
