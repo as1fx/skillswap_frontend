@@ -3,6 +3,21 @@ import { useState } from 'react';
 export default function UserCard({ user }) {
   const [showAllSkills, setShowAllSkills] = useState(false);
 
+  // Helper function to safely get user display name
+  const getUserDisplayName = (user) => {
+    return user?.username || 'Unknown User';
+  };
+
+  // Helper function to safely get user email
+  const getUserEmail = (user) => {
+    return user?.email || '';
+  };
+
+  // Helper function to safely get user bio
+  const getUserBio = (user) => {
+    return user?.bio || 'No bio provided';
+  };
+
   const toggleSkills = () => {
     setShowAllSkills(!showAllSkills);
   };
@@ -21,9 +36,9 @@ export default function UserCard({ user }) {
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h2 className="text-xl font-semibold mb-2 text-white">{user.username}</h2>
-            <p className="text-gray-400 text-sm mb-2">{user.email}</p>
-            <p className="text-gray-300 mb-4">{user.bio || 'No bio provided'}</p>
+            <h2 className="text-xl font-semibold mb-2 text-white">{getUserDisplayName(user)}</h2>
+            <p className="text-gray-400 text-sm mb-2">{getUserEmail(user)}</p>
+            <p className="text-gray-300 mb-4">{getUserBio(user)}</p>
           </div>
           
           {/* Skill Count Badges */}

@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
+  baseURL: import.meta.env.VITE_BACKEND_URL
 });
 
 // Add auth token to requests if available
@@ -44,7 +44,21 @@ api.interceptors.response.use(
 export const getUsers = () => api.get('/users');
 export const getUser = (id) => api.get(`/users/${id}`);
 export const createUser = (user) => api.post('/users', user);
-export const updateUser = (id, user) => api.put(`/users/${id}`, user);
+export const updateUser = async(id, userData) => {
+  try {
+    const response = await api.put(`/users/${id}`, userData, {
+      
+      headers: {
+        'Content-type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to update user');
+  }
+};
+
 export const deleteUser = (id) => api.delete(`/users/${id}`);
 
 // Authentication endpoints - Updated for Spring Boot
@@ -57,18 +71,57 @@ export const logoutUser = () => api.post('/auth/logout');
 // Skills endpoints
 export const getSkills = () => api.get('/skills');
 export const getSkill = (id) => api.get(`/skills/${id}`);
+export const getSkillByName = (name) => api.get(`/skills/name/${name}`);
+export const getSkillsByCategory = (category) => api.get(`/skills/category/${category}`);
+export const getSkillCategories = () => api.get('/skills/categories');
 export const createSkill = (skill) => api.post('/skills', skill);
 export const updateSkill = (id, skill) => api.put(`/skills/${id}`, skill);
 export const deleteSkill = (id) => api.delete(`/skills/${id}`);
 
 // User-Skill relationships - Updated for your database schema
-export const getUserSkills = (userId) => api.get(`/users/${userId}/skills`);
-export const addSkillToUser = (userId, skillId, type) => {
-  // type can be: 'general', 'offered', 'desired'
-  return api.post(`/users/${userId}/skills`, { skillId, type });
+export const getUserSkills = async (userId) => {
+  try {
+    console.log('Getting skills for user:', userId);
+    const response = await api.get(`/users/${userId}/skills`);
+    return response;
+  } catch (error) {
+    console.error('Error in getUserSkills:', error.response?.data || error.message);
+    // Return a default empty response structure instead of throwing
+    // This allows the UI to gracefully handle backend failures
+    return { 
+      data: { OFFERED: [], DESIRED: [] },
+      status: error.response?.status || 500
+    };
+  }
 };
-export const removeSkillFromUser = (userId, skillId, type) => 
-  api.delete(`/users/${userId}/skills/${skillId}`, { data: { type } });
+
+export const addSkillToUser = async (userId, skillData) => {
+  try {
+    console.log('Adding skill to user:', userId, skillData);
+    // The backend expects { skillName: "name", type: "OFFERED/DESIRED" }
+    const response = await api.post(`/users/${userId}/skills`, skillData);
+    return response;
+  } catch (error) {
+    console.error('Error in addSkillToUser:', error.response?.data || error.message);
+    throw error;
+  }
+};
+export const removeSkillFromUser = async (userId, skillId, type) => {
+  try {
+    // Log what we're trying to do
+    console.log('Removing skill:', { userId, skillId, type });
+    
+    // Send the delete request with the type in the request body
+    const response = await api.delete(`/users/${userId}/skills/${skillId}`, { 
+      data: { type }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error in removeSkillFromUser:', error.response?.data || error.message);
+    throw error;
+  }
+};
 
 // Search and matching
 export const searchUsers = (query) => api.get(`/users/search?q=${query}`);
@@ -92,6 +145,9 @@ export default {
   logoutUser,
   getSkills,
   getSkill,
+  getSkillByName,
+  getSkillsByCategory,
+  getSkillCategories,
   createSkill,
   updateSkill,
   deleteSkill,
